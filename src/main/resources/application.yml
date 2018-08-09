@@ -7,6 +7,6 @@ alipay:
   FORMAT: json
   SIGNTYPE: RSA2
   alipay_url: https://openapi.alipaydev.com/gateway.do
-  notify_url: http://2szzz3.natappfree.cc/notify
-  return_url: http://2szzz3.natappfree.cc/sync
+  notify_url: http://av3h6j.natappfree.cc/notify
+  return_url: http://av3h6j.natappfree.cc/sync
   log_path: /log

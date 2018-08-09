@@ -17,9 +17,21 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.domain.AlipayTradeCloseModel;
+import com.alipay.api.domain.AlipayTradeFastpayRefundQueryModel;
+import com.alipay.api.domain.AlipayTradeQueryModel;
+import com.alipay.api.domain.AlipayTradeRefundModel;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
 import com.alipay.api.internal.util.AlipaySignature;
+import com.alipay.api.request.AlipayTradeCloseRequest;
+import com.alipay.api.request.AlipayTradeFastpayRefundQueryRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
+import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
+import com.alipay.api.response.AlipayTradeCloseResponse;
+import com.alipay.api.response.AlipayTradeFastpayRefundQueryResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
+import com.alipay.api.response.AlipayTradeRefundResponse;
 
 @Controller
 public class TestControl {
@@ -49,8 +61,9 @@ public class TestControl {
 	public void testpay(@RequestParam("title") String title, @RequestParam("amount") String amount,
 			@RequestParam("order") String order, HttpServletResponse httpResponse)
 			throws ServletException, IOException {
+		// 获得初始化的AlipayClient
 		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
-				ALIPAY_PUBLIC_KEY, SIGNTYPE); // 获得初始化的AlipayClient
+				ALIPAY_PUBLIC_KEY, SIGNTYPE);
 		AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();// 创建API对应的request
 		alipayRequest.setReturnUrl(return_url);
 		alipayRequest.setNotifyUrl(notify_url);// 在公共参数中设置回跳和通知地址
@@ -81,10 +94,10 @@ public class TestControl {
 		for (String key : keySet) {
 			System.out.println(key + "：" + map.get(key));
 		}
-		boolean sign = AlipaySignature.rsaCheckV1(map, ALIPAY_PUBLIC_KEY, CHARSET,SIGNTYPE);
+		boolean sign = AlipaySignature.rsaCheckV1(map, ALIPAY_PUBLIC_KEY, CHARSET, SIGNTYPE);
 		if (sign) {
 			System.out.println("验签成功！！！");
-		}else {
+		} else {
 			System.out.println("验签失败！！！");
 		}
 		System.out.println("******************支付宝异步通知  end*********************");
@@ -100,6 +113,54 @@ public class TestControl {
 		}
 		System.out.println("******************支付宝同步回调  end*********************");
 		return map;
+	}
+
+	@GetMapping("/query")
+	@ResponseBody
+	public String query(AlipayTradeQueryModel queryModel) throws AlipayApiException {
+		// 获得初始化的AlipayClient
+		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
+				ALIPAY_PUBLIC_KEY, SIGNTYPE);
+		AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+		request.setBizModel(queryModel);
+		AlipayTradeQueryResponse response = alipayClient.execute(request);
+		return response.getBody();
+	}
+
+	@GetMapping("/close")
+	@ResponseBody
+	public String close(AlipayTradeCloseModel closeModel) throws AlipayApiException {
+		// 获得初始化的AlipayClient
+		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
+				ALIPAY_PUBLIC_KEY, SIGNTYPE);
+		AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
+		request.setBizModel(closeModel);
+		AlipayTradeCloseResponse response = alipayClient.execute(request);
+		return response.getBody();
+	}
+
+	@GetMapping("/refund")
+	@ResponseBody
+	public String refund(AlipayTradeRefundModel refundModel) throws AlipayApiException {
+		// 获得初始化的AlipayClient
+		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
+				ALIPAY_PUBLIC_KEY, SIGNTYPE);
+		AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
+		request.setBizModel(refundModel);
+		AlipayTradeRefundResponse response = alipayClient.execute(request);
+		return response.getBody();
+	}
+
+	@GetMapping("/refund/query")
+	@ResponseBody
+	public String refundQuery(AlipayTradeFastpayRefundQueryModel refundQueryModel) throws AlipayApiException {
+		// 获得初始化的AlipayClient
+		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
+				ALIPAY_PUBLIC_KEY, SIGNTYPE);
+		AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
+		request.setBizModel(refundQueryModel);
+		AlipayTradeFastpayRefundQueryResponse response = alipayClient.execute(request);
+		return response.getBody();
 	}
 
 }
