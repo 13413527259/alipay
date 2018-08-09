@@ -1,6 +1,8 @@
 package com.alipay.demo.test;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.TreeSet;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
@@ -8,12 +10,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.domain.AlipayTradeWapPayModel;
+import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 
 @Controller
@@ -29,6 +34,8 @@ public class TestControl {
 	private String SIGNTYPE;
 	@Value("${alipay.APP_PRIVATE_KEY}")
 	private String APP_PRIVATE_KEY;
+	@Value("${alipay.APP_PUBLIC_KEY}")
+	private String APP_PUBLIC_KEY;
 	@Value("${alipay.ALIPAY_PUBLIC_KEY}")
 	private String ALIPAY_PUBLIC_KEY;
 	@Value("${alipay.alipay_url}")
@@ -39,23 +46,19 @@ public class TestControl {
 	private String return_url;
 
 	@GetMapping("/testpay")
-	public void testpay(@RequestParam("body") String body, @RequestParam("title") String title,
-			@RequestParam("amount") String amount, @RequestParam("order") String order,
-			HttpServletResponse httpResponse) throws ServletException, IOException {
+	public void testpay(@RequestParam("title") String title, @RequestParam("amount") String amount,
+			@RequestParam("order") String order, HttpServletResponse httpResponse)
+			throws ServletException, IOException {
 		AlipayClient alipayClient = new DefaultAlipayClient(alipay_url, APP_ID, APP_PRIVATE_KEY, FORMAT, CHARSET,
 				ALIPAY_PUBLIC_KEY, SIGNTYPE); // 获得初始化的AlipayClient
 		AlipayTradeWapPayRequest alipayRequest = new AlipayTradeWapPayRequest();// 创建API对应的request
 		alipayRequest.setReturnUrl(return_url);
 		alipayRequest.setNotifyUrl(notify_url);// 在公共参数中设置回跳和通知地址
 		AlipayTradeWapPayModel payModel = new AlipayTradeWapPayModel();
-		payModel.setBody(body);// 描述
 		payModel.setSubject(title);// 标题
 		payModel.setOutTradeNo(order);// 订单号
 		payModel.setTotalAmount(amount);// 钱
-		payModel.setSellerId("208812345671234567");
-		payModel.setTimeExpire("90m");
 		payModel.setProductCode("QUICK_WAP_WAY");
-		payModel.setGoodsType("1");
 		alipayRequest.setBizModel(payModel);
 		String form = "";
 		try {
@@ -67,6 +70,36 @@ public class TestControl {
 		httpResponse.getWriter().write(form);// 直接将完整的表单html输出到页面
 		httpResponse.getWriter().flush();
 		httpResponse.getWriter().close();
+	}
+
+	@PostMapping("/notify")
+	@ResponseBody
+	public String notify(@RequestParam Map<String, String> map) throws AlipayApiException {
+		System.out.println("******************支付宝异步通知*********************");
+		TreeSet<String> keySet = new TreeSet<>(map.keySet());
+		keySet.comparator();
+		for (String key : keySet) {
+			System.out.println(key + "：" + map.get(key));
+		}
+		boolean sign = AlipaySignature.rsaCheckV1(map, ALIPAY_PUBLIC_KEY, CHARSET,SIGNTYPE);
+		if (sign) {
+			System.out.println("验签成功！！！");
+		}else {
+			System.out.println("验签失败！！！");
+		}
+		System.out.println("******************支付宝异步通知  end*********************");
+		return "success";
+	}
+
+	@GetMapping("/sync")
+	@ResponseBody
+	public Map<String, Object> sync(@RequestParam Map<String, Object> map) {
+		System.out.println("******************支付宝同步回调*********************");
+		for (String key : map.keySet()) {
+			System.out.println(key + "：" + map.get(key));
+		}
+		System.out.println("******************支付宝同步回调  end*********************");
+		return map;
 	}
 
 }
